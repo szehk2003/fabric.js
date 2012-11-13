@@ -6290,6 +6290,48 @@ fabric.util.string = {
       this._initEvents();
       this.calcOffset();
     },
+	
+	/**
+	 * When true, images defined by cornerImageTopLeft, cornerImageTopRight, cornerImageBottomRight, cornerImageBottomLeft will be added to the controls
+	 * @property
+	 * @type Boolean
+	 */
+	useCornerImages : false,
+	
+	/**
+	 * Defines the path of the image that will be attached to the top-left corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageTopLeft : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the top-right corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageTopRight : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the bottm-right corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageBottomRight : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the bottom-left corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageBottomLeft : '',
+	
+	/**
+	 * Defines the padding that is added to the corner images (padded between rect control and image)
+	 * @property
+	 * @ type Boolean
+	 */
+	cornerImagePadding : 10,
 
     /**
      * Adds mouse listeners to  canvas
@@ -8687,32 +8729,60 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
       ctx.strokeStyle = ctx.fillStyle = this.cornerColor;
 
       // top-left
-      _left = left - scaleOffsetX - strokeWidth2 - paddingX;
-      _top = top - scaleOffsetY - strokeWidth2 - paddingY;
+	  _left = left - scaleOffsetX - strokeWidth2 - paddingX;
+	  _top = top - scaleOffsetY - strokeWidth2 - paddingY;
 
-      ctx.clearRect(_left, _top, sizeX, sizeY);
-      ctx[methodName](_left, _top, sizeX, sizeY);
+		ctx.clearRect(_left, _top, sizeX, sizeY);
+		ctx[methodName](_left, _top, sizeX, sizeY);
 
-      // top-right
-      _left = left + width - scaleOffsetX + strokeWidth2 + paddingX;
-      _top = top - scaleOffsetY - strokeWidth2 - paddingY;
+		if (this.canvas.useCornerImages) {
+			var scaledPadding = this.canvas.cornerImagePadding / this.scaleX;
+		}
+		
+		if (this.canvas.useCornerImages) {
+			var tl = new Image();
+			tl.src = this.canvas.cornerImageTopLeft;
+			ctx.drawImage(tl, _left - scaledPadding, _top - scaledPadding, sizeX, sizeY);
+		}
 
-      ctx.clearRect(_left, _top, sizeX, sizeY);
-      ctx[methodName](_left, _top, sizeX, sizeY);
+		// top-right
+		_left = left + width - scaleOffsetX + strokeWidth2 + paddingX;
+		_top = top - scaleOffsetY - strokeWidth2 - paddingY;
 
-      // bottom-left
-      _left = left - scaleOffsetX - strokeWidth2 - paddingX;
-      _top = top + height + scaleOffsetSizeY + strokeWidth2 + paddingY;
+		ctx.clearRect(_left, _top, sizeX, sizeY);
+		ctx[methodName](_left, _top, sizeX, sizeY);
 
-      ctx.clearRect(_left, _top, sizeX, sizeY);
-      ctx[methodName](_left, _top, sizeX, sizeY);
+		if (this.canvas.useCornerImages) {
+			var tr = new Image();
+			tr.src = this.canvas.cornerImageTopRight;
+			ctx.drawImage(tr, _left + scaledPadding, _top - scaledPadding, sizeX, sizeY);
+		}
 
-      // bottom-right
-      _left = left + width + scaleOffsetSizeX + strokeWidth2 + paddingX;
-      _top = top + height + scaleOffsetSizeY + strokeWidth2 + paddingY;
+		// bottom-left
+		_left = left - scaleOffsetX - strokeWidth2 - paddingX;
+		_top = top + height + scaleOffsetSizeY + strokeWidth2 + paddingY;
 
-      ctx.clearRect(_left, _top, sizeX, sizeY);
-      ctx[methodName](_left, _top, sizeX, sizeY);
+		ctx.clearRect(_left, _top, sizeX, sizeY);
+		ctx[methodName](_left, _top, sizeX, sizeY);
+
+		if (this.canvas.useCornerImages) {
+			var bl = new Image();
+			bl.src = this.canvas.cornerImageBottomLeft;
+			ctx.drawImage(bl, _left - scaledPadding, _top + scaledPadding, sizeX, sizeY);
+		}
+
+		// bottom-right
+		_left = left + width + scaleOffsetSizeX + strokeWidth2 + paddingX;
+		_top = top + height + scaleOffsetSizeY + strokeWidth2 + paddingY;
+
+		ctx.clearRect(_left, _top, sizeX, sizeY);
+		ctx[methodName](_left, _top, sizeX, sizeY);
+		
+		if (this.canvas.useCornerImages) {
+			var br = new Image();
+			br.src = this.canvas.cornerImageBottomRight;
+			ctx.drawImage(br, _left + scaledPadding, _top + scaledPadding, sizeX, sizeY);
+		}
 
       if (!this.lockUniScaling) {
         // middle-top

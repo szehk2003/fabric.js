@@ -162,6 +162,48 @@
       this._initEvents();
       this.calcOffset();
     },
+	
+	/**
+	 * When true, images defined by cornerImageTopLeft, cornerImageTopRight, cornerImageBottomRight, cornerImageBottomLeft will be added to the controls
+	 * @property
+	 * @type Boolean
+	 */
+	useCornerImages : false,
+	
+	/**
+	 * Defines the path of the image that will be attached to the top-left corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageTopLeft : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the top-right corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageTopRight : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the bottm-right corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageBottomRight : '',
+	
+	/**
+	 * Defines the path of the image that will be attached to the bottom-left corner if useCornerImages is set to true
+	 * @property
+	 * @type String
+	 */
+	cornerImageBottomLeft : '',
+	
+	/**
+	 * Defines the padding that is added to the corner images (padded between rect control and image)
+	 * @property
+	 * @ type Boolean
+	 */
+	cornerImagePadding : 10,
 
     /**
      * Adds mouse listeners to  canvas
