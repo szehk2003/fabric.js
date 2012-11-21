@@ -1,13 +1,13 @@
 /* build: `node build.js modules=ALL` */
 /*! Fabric.js Copyright 2008-2012, Printio (Juriy Zaytsev, Maxim Chernyak) */
 
-var fabric = fabric || { version: "0.9.21" };
+var fabric = fabric || { version: "0.9.22" };
 
-if (typeof exports != 'undefined') {
+if (typeof exports !== 'undefined') {
   exports.fabric = fabric;
 }
 
-if (typeof document != 'undefined' && typeof window != 'undefined') {
+if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   fabric.document = document;
   fabric.window = window;
 }
@@ -1877,6 +1877,18 @@ fabric.Observable.off = fabric.Observable.stopObserving;
   }
 
   /**
+   * Transforms radians to degrees.
+   * @static
+   * @method radiansToDegrees
+   * @memberOf fabric.util
+   * @param {Number} radians value in radians
+   * @return {Number} value in degrees
+   */
+  function radiansToDegrees(radians) {
+    return radians / PiBy180;
+  }
+
+  /**
    * A wrapper around Number#toFixed, which contrary to native method returns number, not string.
    * @static
    * @method toFixed
@@ -2041,6 +2053,7 @@ fabric.Observable.off = fabric.Observable.stopObserving;
 
   fabric.util.removeFromArray = removeFromArray;
   fabric.util.degreesToRadians = degreesToRadians;
+  fabric.util.radiansToDegrees = radiansToDegrees;
   fabric.util.toFixed = toFixed;
   fabric.util.getRandomInt = getRandomInt;
   fabric.util.falseFunction = falseFunction;
@@ -2478,11 +2491,6 @@ fabric.util.string = {
     return true;
   }
   var getUniqueId = (function () {
-    if (typeof fabric.document.documentElement.uniqueID !== 'undefined') {
-      return function (element) {
-        return element.uniqueID;
-      };
-    }
     var uid = 0;
     return function (element) {
       return element.__uniqueID || (element.__uniqueID = 'uniqueID__' + uid++);
@@ -6132,6 +6140,8 @@ fabric.util.string = {
       getPointer = fabric.util.getPointer,
       addListener = fabric.util.addListener,
       removeListener = fabric.util.removeListener,
+      degreesToRadians = fabric.util.degreesToRadians,
+      radiansToDegrees = fabric.util.radiansToDegrees,
       cursorMap = {
         'tr': 'ne-resize',
         'br': 'se-resize',
@@ -6806,7 +6816,7 @@ fabric.util.string = {
         ey: pointer.y,
         left: target.left,
         top: target.top,
-        theta: target._theta,
+        theta: degreesToRadians(target.angle),
         width: target.width * target.scaleX
       };
 
@@ -7008,7 +7018,7 @@ fabric.util.string = {
       var lastAngle = atan2(t.ey - t.top - o.top, t.ex - t.left - o.left),
           curAngle = atan2(y - t.top - o.top, x - t.left - o.left);
 
-      t.target._theta = (curAngle - lastAngle) + t.theta;
+      t.target.angle = radiansToDegrees(curAngle - lastAngle + t.theta);
     },
 
     /**
@@ -7023,9 +7033,9 @@ fabric.util.string = {
     * @method _resetObjectTransform:
     */
     _resetObjectTransform: function (target) {
-        target.scaleX = 1;
-        target.scaleY = 1;
-        target.setAngle(0);
+      target.scaleX = 1;
+      target.scaleY = 1;
+      target.setAngle(0);
     },
 
     /**
@@ -8016,14 +8026,16 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     rotatingPointOffset:      40,
 
     /**
-     * @private
+     * When set to `true`, objects are "found" on canvas on per-pixel basis rather than according to bounding box
      * @property
-     * @type Number
+     * @type Boolean
      */
-    _theta:                   0,
-
     perPixelTargetFind:       false,
 
+    /**
+     * @property
+     * @type Boolean
+     */
     includeDefaultValues:     true,
 
     /**
@@ -8034,7 +8046,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
      */
     stateProperties:  (
       'top left width height scaleX scaleY flipX flipY ' +
-      'theta angle opacity cornersize fill overlayFill ' +
+      'angle opacity cornersize fill overlayFill ' +
       'stroke strokeWidth strokeDashArray fillRule ' +
       'borderScaleFactor transformMatrix selectable'
     ).split(' '),
@@ -8092,7 +8104,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     transform: function(ctx) {
       ctx.globalAlpha = this.opacity;
       ctx.translate(this.left, this.top);
-      ctx.rotate(this._theta);
+      ctx.rotate(degreesToRadians(this.angle));
       ctx.scale(
         this.scaleX * (this.flipX ? -1 : 1),
         this.scaleY * (this.flipY ? -1 : 1)
@@ -8272,12 +8284,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
       if (shouldConstrainValue) {
         value = fabric.Object.MIN_SCALE_LIMIT;
       }
-      if (key === 'angle') {
-        this.setAngle(value);
-      }
-      else {
-        this[key] = value;
-      }
+      this[key] = value;
     },
 
     /**
@@ -8313,9 +8320,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
      * @return {Any} value of a property
      */
     get: function(property) {
-      return (property === 'angle')
-        ? this.getAngle()
-        : this[property];
+      return this[property];
     },
 
     /**
@@ -8426,39 +8431,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     },
 
     /**
-     * Sets object opacity
-     * @method setOpacity
-     * @param value {Number} value 0-1
-     * @return {fabric.Object} thisArg
-     * @chainable
-     */
-    setOpacity: function(value) {
-      this.set('opacity', value);
-      return this;
-    },
-
-    /**
-     * Returns object's angle value
-     * @method getAngle
-     * @return {Number} angle value
-     */
-    getAngle: function() {
-      return this._theta * 180 / Math.PI;
-    },
-
-    /**
-     * Sets object's angle
-     * @method setAngle
-     * @param value {Number} angle value
-     * @return {Object} thisArg
-     */
-    setAngle: function(value) {
-      this._theta = value / 180 * Math.PI;
-      this.angle = value;
-      return this;
-    },
-
-    /**
      * Sets corner position coordinates based on current angle, width and height.
      * @method setCoords
      * return {fabric.Object} thisArg
@@ -8467,7 +8439,8 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     setCoords: function() {
 
       var strokeWidth = this.strokeWidth > 1 ? this.strokeWidth : 0,
-          padding = this.padding;
+          padding = this.padding,
+          theta = degreesToRadians(this.angle);
 
       this.currentWidth = (this.width + strokeWidth) * this.scaleX + padding * 2;
       this.currentHeight = (this.height + strokeWidth) * this.scaleY + padding * 2;
@@ -8477,16 +8450,15 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
          this.currentWidth = Math.abs(this.currentWidth);
       }
 
-      this._hypotenuse = Math.sqrt(
+      var _hypotenuse = Math.sqrt(
         Math.pow(this.currentWidth / 2, 2) +
         Math.pow(this.currentHeight / 2, 2));
 
-      this._angle = Math.atan(this.currentHeight / this.currentWidth);
+      var _angle = Math.atan(this.currentHeight / this.currentWidth);
 
       // offset added for rotate and scale actions
-      var offsetX = Math.cos(this._angle + this._theta) * this._hypotenuse,
-          offsetY = Math.sin(this._angle + this._theta) * this._hypotenuse,
-          theta = this._theta,
+      var offsetX = Math.cos(_angle + theta) * _hypotenuse,
+          offsetY = Math.sin(_angle + theta) * _hypotenuse,
           sinTh = Math.sin(theta),
           cosTh = Math.cos(theta);
 
@@ -8530,16 +8502,16 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
       // debugging
 
       // setTimeout(function() {
-      //         canvas.contextTop.fillStyle = 'green';
-      //         canvas.contextTop.fillRect(mb.x, mb.y, 3, 3);
-      //         canvas.contextTop.fillRect(bl.x, bl.y, 3, 3);
-      //         canvas.contextTop.fillRect(br.x, br.y, 3, 3);
-      //         canvas.contextTop.fillRect(tl.x, tl.y, 3, 3);
-      //         canvas.contextTop.fillRect(tr.x, tr.y, 3, 3);
-      //         canvas.contextTop.fillRect(ml.x, ml.y, 3, 3);
-      //         canvas.contextTop.fillRect(mr.x, mr.y, 3, 3);
-      //         canvas.contextTop.fillRect(mt.x, mt.y, 3, 3);
-      //       }, 50);
+      //   canvas.contextTop.fillStyle = 'green';
+      //   canvas.contextTop.fillRect(mb.x, mb.y, 3, 3);
+      //   canvas.contextTop.fillRect(bl.x, bl.y, 3, 3);
+      //   canvas.contextTop.fillRect(br.x, br.y, 3, 3);
+      //   canvas.contextTop.fillRect(tl.x, tl.y, 3, 3);
+      //   canvas.contextTop.fillRect(tr.x, tr.y, 3, 3);
+      //   canvas.contextTop.fillRect(ml.x, ml.y, 3, 3);
+      //   canvas.contextTop.fillRect(mr.x, mr.y, 3, 3);
+      //   canvas.contextTop.fillRect(mt.x, mt.y, 3, 3);
+      // }, 50);
 
       // clockwise
       this.oCoords = { tl: tl, tr: tr, br: br, bl: bl, ml: ml, mt: mt, mr: mr, mb: mb, mtr: mtr };
@@ -9177,12 +9149,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
      */
     _setCornerCoords: function() {
       var coords = this.oCoords,
-          theta = degreesToRadians(45 - this.getAngle()),
+          theta = degreesToRadians(this.angle),
+          newTheta = degreesToRadians(45 - this.angle),
           cornerHypotenuse = Math.sqrt(2 * Math.pow(this.cornersize, 2)) / 2,
-          cosHalfOffset = cornerHypotenuse * Math.cos(theta),
-          sinHalfOffset = cornerHypotenuse * Math.sin(theta),
-          sinTh = Math.sin(this._theta),
-          cosTh = Math.cos(this._theta);
+          cosHalfOffset = cornerHypotenuse * Math.cos(newTheta),
+          sinHalfOffset = cornerHypotenuse * Math.sin(newTheta),
+          sinTh = Math.sin(theta),
+          cosTh = Math.cos(theta);
 
       coords.tl.corner = {
         tl: {
@@ -9540,11 +9513,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
     }
   });
 
-  /**
-   * @alias rotate -> setAngle
-   */
-  fabric.Object.prototype.rotate = fabric.Object.prototype.setAngle;
-
   var proto = fabric.Object.prototype;
   for (var i = proto.stateProperties.length; i--; ) {
 
@@ -9565,6 +9533,11 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, {
       })(propName);
     }
   }
+
+  /**
+   * @alias rotate -> setAngle
+   */
+  fabric.Object.prototype.rotate = fabric.Object.prototype.setAngle;
 
   extend(fabric.Object.prototype, fabric.Observable);
 
@@ -13366,7 +13339,7 @@ fabric.Image.filters.Convolute = fabric.util.createClass({
     return {
       type: this.type,
       matrix: this.matrix
-    }
+    };
   }
 });
 
@@ -13405,8 +13378,7 @@ fabric.Image.filters.Pixelate = fabric.util.createClass({
         data = imageData.data,
         iLen = imageData.width,
         jLen = imageData.height,
-        index, average, i, j,
-        offsetBlocksize = this.blocksize - 1, r, g, b, a;
+        index, i, j, r, g, b, a;
 
     for (i = 0; i < iLen; i += this.blocksize) {
       for (j = 0; j < jLen; j += this.blocksize) {
@@ -13578,7 +13550,6 @@ fabric.Image.filters.Pixelate.fromObject = function(object) {
       this._initStateProperties();
       this.text = text;
       this.setOptions(options);
-      this._theta = this.angle * Math.PI / 180;
       this._initDimensions();
       this.setCoords();
     },

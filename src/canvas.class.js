@@ -4,6 +4,8 @@
       getPointer = fabric.util.getPointer,
       addListener = fabric.util.addListener,
       removeListener = fabric.util.removeListener,
+      degreesToRadians = fabric.util.degreesToRadians,
+      radiansToDegrees = fabric.util.radiansToDegrees,
       cursorMap = {
         'tr': 'ne-resize',
         'br': 'se-resize',
@@ -678,7 +680,7 @@
         ey: pointer.y,
         left: target.left,
         top: target.top,
-        theta: target._theta,
+        theta: degreesToRadians(target.angle),
         width: target.width * target.scaleX
       };
 
@@ -880,7 +882,7 @@
       var lastAngle = atan2(t.ey - t.top - o.top, t.ex - t.left - o.left),
           curAngle = atan2(y - t.top - o.top, x - t.left - o.left);
 
-      t.target._theta = (curAngle - lastAngle) + t.theta;
+      t.target.angle = radiansToDegrees(curAngle - lastAngle + t.theta);
     },
 
     /**
@@ -895,9 +897,9 @@
     * @method _resetObjectTransform:
     */
     _resetObjectTransform: function (target) {
-        target.scaleX = 1;
-        target.scaleY = 1;
-        target.setAngle(0);
+      target.scaleX = 1;
+      target.scaleY = 1;
+      target.setAngle(0);
     },
 
     /**
