@@ -130,6 +130,7 @@ var filesToInclude = [
   'src/path_group.class.js',
   'src/group.class.js',
   'src/image.class.js',
+  'src/star.class.js',
 
   ifSpecifiedInclude('object_straightening', 'src/object_straightening.js'),
 
